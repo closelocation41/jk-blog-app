@@ -31,12 +31,15 @@ jobs:
 
     - name: Build and Push Docker Images
       env:
-        ECR_BACKEND_REPO: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-backend
-        ECR_FRONTEND_REPO: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-frontend
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_BACKEND_REPO: ${{ steps.login-ecr.outputs.registry }}/jk-blog-backend
+        ECR_FRONTEND_REPO: ${{ steps.login-ecr.outputs.registry }}/jk-blog-frontend
       run: |
+        # Build backend image
         docker build -t $ECR_BACKEND_REPO:latest ./backend
         docker push $ECR_BACKEND_REPO:latest
 
+        # Build frontend image
         docker build -t $ECR_FRONTEND_REPO:latest ./frontend
         docker push $ECR_FRONTEND_REPO:latest
 
@@ -51,18 +54,18 @@ jobs:
         ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
           # Install dependencies
           sudo apt update
-          sudo apt install -y git docker.io docker-compose
+          sudo apt install -y git docker.io docker-compose awscli
 
           # Start Docker
           sudo systemctl start docker
           sudo systemctl enable docker
 
           # Authenticate with ECR
-          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-south-1.amazonaws.com
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
 
           # Pull latest images
-          docker pull 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-backend:latest
-          docker pull 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-frontend:latest
+          docker pull ${{ steps.login-ecr.outputs.registry }}/jk-blog-backend:latest
+          docker pull ${{ steps.login-ecr.outputs.registry }}/jk-blog-frontend:latest
 
           # Start services with Docker Compose
           docker-compose -f /home/ubuntu/docker-compose.yml up -d --force-recreate
