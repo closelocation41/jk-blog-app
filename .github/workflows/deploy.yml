@@ -3,7 +3,7 @@ name: Deploy to AWS
 on:
   push:
     branches:
-      - main  # Change this if needed
+      - main
 
 jobs:
   deploy:
@@ -18,7 +18,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ap-south-1  # Change this if needed
+        aws-region: ap-south-1
 
     - name: Log in to Amazon ECR
       id: login-ecr
@@ -31,39 +31,39 @@ jobs:
 
     - name: Build and Push Docker Images
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        BACKEND_REPO: jk-blog-backend
-        FRONTEND_REPO: jk-blog-frontend
+        ECR_BACKEND_REPO: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-backend
+        ECR_FRONTEND_REPO: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-frontend
       run: |
-        docker build -t $ECR_REGISTRY/$BACKEND_REPO:latest ./backend
-        docker build -t $ECR_REGISTRY/$FRONTEND_REPO:latest ./frontend
-        docker push $ECR_REGISTRY/$BACKEND_REPO:latest
-        docker push $ECR_REGISTRY/$FRONTEND_REPO:latest
+        docker build -t $ECR_BACKEND_REPO:latest ./backend
+        docker push $ECR_BACKEND_REPO:latest
+
+        docker build -t $ECR_FRONTEND_REPO:latest ./frontend
+        docker push $ECR_FRONTEND_REPO:latest
 
     - name: Deploy to AWS EC2
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}
-        EC2_USER: ubuntu  # Change this if needed
+        EC2_USER: ubuntu
         PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
       run: |
         echo "$PRIVATE_KEY" > private_key.pem
         chmod 600 private_key.pem
         ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USER@$EC2_HOST << 'EOF'
-          # Install Git, Docker, and Docker Compose
+          # Install dependencies
           sudo apt update
           sudo apt install -y git docker.io docker-compose
 
-          # Start Docker service if not running
+          # Start Docker
           sudo systemctl start docker
           sudo systemctl enable docker
 
-          # Authenticate Docker with ECR
-          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+          # Authenticate with ECR
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-south-1.amazonaws.com
 
-          # Pull latest images from ECR
-          docker pull $ECR_REGISTRY/$BACKEND_REPO:latest
-          docker pull $ECR_REGISTRY/$FRONTEND_REPO:latest
+          # Pull latest images
+          docker pull 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-backend:latest
+          docker pull 123456789012.dkr.ecr.ap-south-1.amazonaws.com/jk-blog-frontend:latest
 
-          # Start or update the services using Docker Compose
+          # Start services with Docker Compose
           docker-compose -f /home/ubuntu/docker-compose.yml up -d --force-recreate
         EOF
