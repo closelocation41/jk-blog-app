@@ -58,7 +58,7 @@ jobs:
           sudo systemctl enable docker
 
           # Authenticate Docker with ECR
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
 
           # Pull latest images from ECR
           docker pull $ECR_REGISTRY/$BACKEND_REPO:latest
