@@ -32,16 +32,16 @@ jobs:
     - name: Build and Push Docker Images
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        BACKEND_REPO: jk-blog-backend
-        FRONTEND_REPO: jk-blog-frontend
+        ECR_BACKEND_REPO: ${{ steps.login-ecr.outputs.registry }}/jk-blog-backend
+        ECR_FRONTEND_REPO: ${{ steps.login-ecr.outputs.registry }}/jk-blog-frontend
       run: |
-        # Build Backend
-        docker build -t $ECR_REGISTRY/$BACKEND_REPO:latest ./backend
-        docker push $ECR_REGISTRY/$BACKEND_REPO:latest
+        # Build backend image
+        docker build -t $ECR_BACKEND_REPO:latest ./backend
+        docker push $ECR_BACKEND_REPO:latest
 
-        # Build Frontend
-        docker build -t $ECR_REGISTRY/$FRONTEND_REPO:latest ./frontend
-        docker push $ECR_REGISTRY/$FRONTEND_REPO:latest
+        # Build frontend image
+        docker build -t $ECR_FRONTEND_REPO:latest ./frontend
+        docker push $ECR_FRONTEND_REPO:latest
 
     - name: Deploy to AWS EC2
       env:
@@ -61,29 +61,11 @@ jobs:
           sudo systemctl enable docker
 
           # Authenticate with ECR
-          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
 
           # Pull latest images
-          docker pull $ECR_REGISTRY/$BACKEND_REPO:latest
-          docker pull $ECR_REGISTRY/$FRONTEND_REPO:latest
-
-          # Update Docker Compose file
-          cat <<EOT > /home/ubuntu/docker-compose.yml
-          version: '3.8'
-
-          services:
-            backend:
-              image: $ECR_REGISTRY/$BACKEND_REPO:latest
-              ports:
-                - "3000:3000"
-              restart: always
-
-            frontend:
-              image: $ECR_REGISTRY/$FRONTEND_REPO:latest
-              ports:
-                - "4200:80"
-              restart: always
-          EOT
+          docker pull ${{ steps.login-ecr.outputs.registry }}/jk-blog-backend:latest
+          docker pull ${{ steps.login-ecr.outputs.registry }}/jk-blog-frontend:latest
 
           # Start services with Docker Compose
           docker-compose -f /home/ubuntu/docker-compose.yml up -d --force-recreate
