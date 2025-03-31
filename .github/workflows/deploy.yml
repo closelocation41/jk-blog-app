@@ -1,40 +1,37 @@
-name: Deploy to AWS EC2 (Self-Hosted Runner)
+name: Deploy with Docker Compose
 
 on:
   push:
     branches:
-      - main  # Trigger deployment on main branch push
+      - main  # Deploys on push to main branch
 
 jobs:
   deploy:
-    runs-on: self-hosted  # Runs on EC2 self-hosted runner
+    runs-on: self-hosted  # Ensure EC2 has a self-hosted GitHub runner
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: ap-south-1
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Fetch AWS Secrets from Secrets Manager
+      - name: Fetch AWS Secrets
         id: get-secrets
         run: |
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "my-ec2-secrets" --query SecretString --output text)
           echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
 
-      - name: Log in to Amazon ECR
+      - name: Log in to AWS ECR
         run: |
           aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 851725574620.dkr.ecr.ap-south-1.amazonaws.com
 
-      - name: Pull Latest Docker Images
-        run: |
-          docker-compose pull
-
-      - name: Restart Docker Services
+      - name: Pull Latest Images & Restart Services
         run: |
           docker-compose down
+          docker-compose pull
           docker-compose up -d --remove-orphans
