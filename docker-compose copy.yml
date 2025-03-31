@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: 851725574620.dkr.ecr.ap-south-1.amazonaws.com/jk-backend:latest  # Replace with actual ECR URL
+    image: closelocation41/jk-blog-backend:latest  # Using pre-built image
     environment:
       - DATABASE_URI=mongodb://mongo:27017/myblog-mongo
     ports:
@@ -12,7 +12,7 @@ services:
     restart: always
 
   frontend:
-    image: 851725574620.dkr.ecr.ap-south-1.amazonaws.com/jk-frontend:latest  # Replace with actual ECR URL
+    image: closelocation41/jk-blog-frontend:latest  # Using pre-built image
     ports:
       - "4200:80"
     depends_on:

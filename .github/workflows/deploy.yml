@@ -1,46 +1,40 @@
-name: Deploy to AWS with Docker Compose
+name: Deploy to AWS EC2 (Self-Hosted Runner)
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger deployment on main branch push
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted  # Runs on EC2 self-hosted runner
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set up AWS CLI
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ap-south-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Fetch AWS Secrets from Secrets Manager
+        id: get-secrets
         run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set default.region ap-south-1
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "my-ec2-secrets" --query SecretString --output text)
+          echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
 
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-
-      - name: Clone frontend repo
-        run: git clone https://github.com/closelocation41/jk-frontend.git frontend
-
-      - name: Clone backend repo
-        run: git clone https://github.com/closelocation41/jk-backend.git backend
-
-      - name: Build and push Docker images
+      - name: Log in to Amazon ECR
         run: |
-          docker-compose build
-          docker-compose push
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 851725574620.dkr.ecr.ap-south-1.amazonaws.com
 
-      - name: Deploy on AWS EC2
+      - name: Pull Latest Docker Images
         run: |
-          ssh -o StrictHostKeyChecking=no ec2-user@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            cd /home/ec2-user/app
-            git pull origin main
-            docker-compose down
-            docker-compose pull
-            docker-compose up -d
-          EOF
+          docker-compose pull
+
+      - name: Restart Docker Services
+        run: |
+          docker-compose down
+          docker-compose up -d --remove-orphans
