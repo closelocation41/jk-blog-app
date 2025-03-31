@@ -3,17 +3,29 @@ name: Deploy with Docker Compose
 on:
   push:
     branches:
-      - main  # Deploys on push to main branch
+      - main  # Deploys when pushing to main branch
 
 jobs:
   deploy:
-    runs-on: self-hosted  # Ensure EC2 has a self-hosted GitHub runner
+    runs-on: self-hosted  # Uses EC2 self-hosted runner
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
+      - name: Install Dependencies (Docker & Docker Compose)
+        run: |
+          if ! command -v docker &> /dev/null; then
+            echo "Installing Docker..."
+            sudo apt update && sudo apt install -y docker.io
+          fi
+          if ! command -v docker-compose &> /dev/null; then
+            echo "Installing Docker Compose..."
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+          fi
+
+      - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-region: ap-south-1
@@ -26,11 +38,11 @@ jobs:
           SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "my-ec2-secrets" --query SecretString --output text)
           echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' >> $GITHUB_ENV
 
-      - name: Log in to AWS ECR
+      - name: Log in to Amazon ECR
         run: |
           aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 851725574620.dkr.ecr.ap-south-1.amazonaws.com
 
-      - name: Pull Latest Images & Restart Services
+      - name: Pull Latest Docker Images & Restart Services
         run: |
           docker-compose down
           docker-compose pull
