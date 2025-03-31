@@ -1,4 +1,4 @@
-# JK Project Setup Guide
+# JK Blog App - Setup & Features Guide
 
 ## Prerequisites
 Before setting up the project, ensure the following prerequisites are met:
@@ -18,6 +18,8 @@ Before setting up the project, ensure the following prerequisites are met:
 git clone https://github.com/closelocation41/jk-backend.git
 
 git clone https://github.com/closelocation41/jk-frontend.git
+
+git clone https://github.com/closelocation41/jk-blog-app.git
 ```
 
 ### 1) Local Setup Without Docker
@@ -113,5 +115,54 @@ Create and configure `.env` file:
 cp example.env .env
 ```
 
-Now your project is set up for local development and AWS deployment! 🚀
+---
+
+## Features Covered in JK Blog App
+
+### Design & Architecture
+- Well-structured **Class, API, and Database design** with clear explanations.
+- Focus on **API performance, database integrity, and consistency**.
+- Uses **Microservices Architecture** for scalability.
+- Usage of **design patterns** for maintainability.
+
+### Testing & Automation
+- **95%+ test coverage** ensuring functionality, performance, and reliability.
+- **Automated REST API testing** for robust backend validation.
+- **Test data generation** for large-scale scenarios (e.g., 1000+ users, 100,000+ entities).
+- Performance testing with a focus on scalability.
+
+### Security & Authentication
+- Integration with **Google Authentication**.
+- Secure **Authentication & Authorization** implementation.
+- Good understanding and implementation of **HTTP/HTTPS security, debugging, monitoring, and logging**.
+
+### Database & ORM
+- Uses **MongoDB with ORM** for optimized query execution.
+- Demonstrates efficient **data modeling and large dataset handling**.
+- Ensures **database integrity and consistency**.
+
+### Frontend Development
+- Written entirely in **TypeScript**.
+- **Modular UI components** following design patterns.
+- Well-documented and **simple, maintainable code**.
+- **Responsive design** targeting multiple browsers and devices.
+- **Google PageSpeed Insights** score of **90%+**.
+- Integration with **website analytics** for performance tracking.
+- **Web application test automation** for functional validation.
+
+### Backend Development
+- Written entirely in **TypeScript**.
+- Demonstrates strong **Object-Oriented Programming (OOP) skills**.
+- **Automated API testing** ensuring reliability.
+- Large-scale **test data generation** and database management.
+- **Microservices-based backend** for scalability.
+- **Problem-solving approach** to real-world scenarios.
+
+### Deployment & Scalability
+- **AWS ECR & EC2 Deployment** with self-hosted GitHub Action Runner.
+- **Dockerized microservices** for easy deployment and scalability.
+- Designed to handle **millions of users efficiently**.
+
+---
+
 
