@@ -8,6 +8,9 @@ Before setting up the project, ensure the following prerequisites are met:
 - Create a `.env` file and copy all data from `example.env`.
 - Update AWS secrets.
 - Update Google authentication keys.
+- **Generate dummy data** using the `dummy-data-generator` app:
+  - Run `node app.js` or `node bulk-generator.js`.
+  - Check the `static` folder and **code coverage screenshots**.
 
 ---
 
@@ -165,4 +168,5 @@ cp example.env .env
 
 ---
 
+Now your project is set up for local development and AWS deployment! 🚀
 
